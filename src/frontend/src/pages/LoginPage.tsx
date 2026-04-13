@@ -1,0 +1,1611 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  AlertCircle,
+  BookOpen,
+  Calculator,
+  CheckCircle2,
+  ChevronRight,
+  GraduationCap,
+  Loader2,
+  Lock,
+  Pencil,
+  Shield,
+  Sparkles,
+  Star,
+  Users,
+} from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { UserRole } from "../backend";
+import { Logo } from "../components/Logo";
+import { useAuth } from "../context/AuthContext";
+
+// ── Constants ──────────────────────────────────────────
+const FLOATING_ELEMENTS = [
+  {
+    Icon: BookOpen,
+    delay: 0,
+    x: "6%",
+    y: "12%",
+    size: 28,
+    color: "text-purple-400/30",
+  },
+  {
+    Icon: Calculator,
+    delay: 0.5,
+    x: "87%",
+    y: "8%",
+    size: 24,
+    color: "text-violet-400/25",
+  },
+  {
+    Icon: GraduationCap,
+    delay: 1,
+    x: "4%",
+    y: "68%",
+    size: 34,
+    color: "text-purple-500/30",
+  },
+  {
+    Icon: Pencil,
+    delay: 1.5,
+    x: "89%",
+    y: "62%",
+    size: 22,
+    color: "text-indigo-400/25",
+  },
+  {
+    Icon: Users,
+    delay: 1.2,
+    x: "83%",
+    y: "38%",
+    size: 24,
+    color: "text-purple-400/25",
+  },
+  {
+    Icon: Star,
+    delay: 0.3,
+    x: "48%",
+    y: "4%",
+    size: 20,
+    color: "text-yellow-400/40",
+  },
+  {
+    Icon: BookOpen,
+    delay: 2.1,
+    x: "22%",
+    y: "86%",
+    size: 20,
+    color: "text-violet-400/20",
+  },
+  {
+    Icon: Star,
+    delay: 0.9,
+    x: "76%",
+    y: "22%",
+    size: 18,
+    color: "text-yellow-300/35",
+  },
+];
+
+const ALL_SUBJECTS = [
+  "English",
+  "Science",
+  "Social Studies",
+  "Maths",
+  "Geography",
+  "Commerce",
+  "IT",
+  "Computer Science",
+  "Hindi",
+];
+
+const CLASSES = [
+  "1st",
+  "2nd",
+  "3rd",
+  "4th",
+  "5th",
+  "6th",
+  "7th",
+  "8th",
+  "9th",
+  "10th",
+  "11th",
+  "12th",
+];
+const BOARDS = ["SSC", "CBSE", "IGSE", "IGCSE"];
+const MEDIUMS = [
+  "English",
+  "Semi-English",
+  "Hindi",
+  "Semi-Hindi",
+  "Marathi",
+  "Semi-Marathi",
+];
+const GENDERS = ["Male", "Female", "Other"];
+const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
+
+const STEP_LABELS = ["Personal", "Academic", "Address", "Parents"];
+
+// ── Types ──────────────────────────────────────────────
+type RegistrationFlow =
+  | "none"
+  | "register-student"
+  | "register-teacher"
+  | "success";
+
+interface StudentFormData {
+  name: string;
+  dateOfBirth: string;
+  gender: string;
+  bloodGroup: string;
+  className: string;
+  board: string;
+  academicMedium: string;
+  rollNumber: string;
+  email: string;
+  livingAddress: string;
+  schoolName: string;
+  schoolAddress: string;
+  schoolTiming: string;
+  parent1Name: string;
+  parent1Contact: string;
+  parent2Name: string;
+  parent2Contact: string;
+}
+
+const EMPTY_STUDENT: StudentFormData = {
+  name: "",
+  dateOfBirth: "",
+  gender: "",
+  bloodGroup: "",
+  className: "",
+  board: "",
+  academicMedium: "",
+  rollNumber: "",
+  email: "",
+  livingAddress: "",
+  schoolName: "",
+  schoolAddress: "",
+  schoolTiming: "",
+  parent1Name: "",
+  parent1Contact: "",
+  parent2Name: "",
+  parent2Contact: "",
+};
+
+function validateEmail(e: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+}
+
+function validateStep(
+  step: number,
+  data: StudentFormData,
+): Record<string, string> {
+  const errs: Record<string, string> = {};
+  if (step === 0) {
+    if (!data.name.trim()) errs.name = "Full name is required";
+    if (!data.gender) errs.gender = "Please select gender";
+  }
+  if (step === 1) {
+    if (!data.className) errs.className = "Please select your class";
+    if (!data.board) errs.board = "Please select a board";
+    if (!data.academicMedium)
+      errs.academicMedium = "Please select academic medium";
+    if (!data.rollNumber.trim()) errs.rollNumber = "Roll number is required";
+    if (!data.email.trim()) errs.email = "Email is required";
+    else if (!validateEmail(data.email))
+      errs.email = "Enter a valid email address";
+  }
+  if (step === 2) {
+    if (!data.livingAddress.trim())
+      errs.livingAddress = "Living address is required";
+    if (!data.schoolName.trim()) errs.schoolName = "School name is required";
+  }
+  if (step === 3) {
+    if (!data.parent1Name.trim())
+      errs.parent1Name = "Parent 1 name is required";
+    if (!data.parent1Contact.trim())
+      errs.parent1Contact = "Parent 1 contact is required";
+    else if (!/^\d{10}$/.test(data.parent1Contact.trim()))
+      errs.parent1Contact = "Enter a valid 10-digit number";
+    if (
+      data.parent2Contact.trim() &&
+      !/^\d{10}$/.test(data.parent2Contact.trim())
+    )
+      errs.parent2Contact = "Enter a valid 10-digit number";
+  }
+  return errs;
+}
+
+// ── Main Component ─────────────────────────────────────
+export default function LoginPage() {
+  const {
+    login,
+    isAuthenticated,
+    isLoading,
+    isInitializing,
+    iiLoginError,
+    userRole,
+    studentProfile,
+    teacherProfile,
+    registerStudent,
+    registerTeacher,
+  } = useAuth();
+
+  const navigate = useNavigate();
+
+  const [flow, setFlow] = useState<RegistrationFlow>("none");
+  const [studentStep, setStudentStep] = useState(0);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [registered, setRegistered] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [slideDir, setSlideDir] = useState(1);
+
+  const [formData, setFormData] = useState<StudentFormData>(EMPTY_STUDENT);
+  const [teacherName, setTeacherName] = useState("");
+  const [teacherPhone, setTeacherPhone] = useState("");
+  const [teacherBio, setTeacherBio] = useState("");
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+
+  const loginAttempted = useRef(false);
+
+  // Redirect existing users straight to their dashboard
+  useEffect(() => {
+    if (
+      !isAuthenticated ||
+      isLoading ||
+      userRole === null ||
+      userRole === UserRole.unregistered
+    )
+      return;
+    if (!registered) {
+      const dest = userRole === UserRole.teacher ? "/teacher" : "/dashboard";
+      const timer = setTimeout(() => navigate({ to: dest }), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, isLoading, userRole, registered, navigate]);
+
+  // Redirect after successful new registration
+  useEffect(() => {
+    if (!registered || flow !== "success" || isLoading) return;
+    if (userRole === null || userRole === UserRole.unregistered) return;
+    const dest = userRole === UserRole.teacher ? "/teacher" : "/dashboard";
+    const timer = setTimeout(() => navigate({ to: dest }), 1800);
+    return () => clearTimeout(timer);
+  }, [registered, flow, userRole, isLoading, navigate]);
+
+  const isWelcomeBack =
+    isAuthenticated &&
+    !isLoading &&
+    userRole !== null &&
+    userRole !== UserRole.unregistered &&
+    !registered;
+
+  const needsRoleSelect =
+    isAuthenticated &&
+    !isLoading &&
+    userRole === UserRole.unregistered &&
+    flow === "none";
+
+  // Show landing whenever not authenticated and not actively in II popup
+  // isInitializing does NOT hide the button — it just shows a subtle "preparing" state
+  const showLanding = !isAuthenticated && !isLoading;
+  const showConnecting = isLoading && !isAuthenticated;
+  const showFetchingRole = isAuthenticated && isLoading && !registered;
+
+  // Sync iiLoginError → local loginError display
+  useEffect(() => {
+    if (iiLoginError) {
+      const lower = iiLoginError.toLowerCase();
+      const isAlreadyAuth =
+        lower.includes("already authenticated") ||
+        lower.includes("already logged in") ||
+        lower.includes("already connected");
+      if (!isAlreadyAuth) {
+        setLoginError(iiLoginError);
+        setIsConnecting(false);
+      }
+    }
+  }, [iiLoginError]);
+
+  // When auth state changes, clear connecting state
+  useEffect(() => {
+    if (isAuthenticated || isLoading) {
+      setIsConnecting(false);
+    }
+  }, [isAuthenticated, isLoading]);
+
+  // If connecting was queued during init, the II popup will open once init completes
+  // Clear the "connecting" spinner if still initializing and login was queued
+  useEffect(() => {
+    if (!isInitializing && isConnecting && !isLoading) {
+      // Auth client is now ready — the queued connectII() will fire automatically
+      // Keep isConnecting=true so spinner stays visible while popup opens
+    }
+  }, [isInitializing, isConnecting, isLoading]);
+
+  const displayName =
+    isWelcomeBack || flow === "success"
+      ? (studentProfile?.name ?? teacherProfile?.name ?? "")
+      : "";
+
+  // ── CRITICAL: The connect button MUST ALWAYS be clickable ──
+  // Never disable it — always call login() directly
+  // isInitializing = auth client setting up; we queue the login in AuthContext
+  const handleLogin = () => {
+    console.log(
+      "[LoginPage] Connect button clicked, isInitializing:",
+      isInitializing,
+    );
+    setLoginError("");
+    loginAttempted.current = true;
+    setIsConnecting(true);
+    // Call login() — it opens the II popup (or queues it if still initializing)
+    login();
+    // Reset connecting state after 20s timeout in case popup was closed
+    setTimeout(() => setIsConnecting(false), 20000);
+  };
+
+  const handleRoleSelect = (role: "student" | "teacher") => {
+    setFormError("");
+    setFieldErrors({});
+    setFormData(EMPTY_STUDENT);
+    setStudentStep(0);
+    setFlow(role === "student" ? "register-student" : "register-teacher");
+  };
+
+  const handleStudentNext = () => {
+    const errs = validateStep(studentStep, formData);
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      return;
+    }
+    setFieldErrors({});
+    setSlideDir(1);
+    setStudentStep((s) => s + 1);
+  };
+
+  const handleStudentBack = () => {
+    if (studentStep === 0) {
+      setFlow("none");
+      return;
+    }
+    setFieldErrors({});
+    setSlideDir(-1);
+    setStudentStep((s) => s - 1);
+  };
+
+  const updateField = (field: keyof StudentFormData, value: string) => {
+    setFormData((f) => ({ ...f, [field]: value }));
+    setFieldErrors((fe) => ({ ...fe, [field]: "" }));
+  };
+
+  const handleStudentSubmit = async () => {
+    const errs = validateStep(3, formData);
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      return;
+    }
+    setFieldErrors({});
+    setIsRegistering(true);
+    setFormError("");
+    const res = await registerStudent(
+      formData.name.trim(),
+      formData.className,
+      formData.email.trim(),
+      formData.rollNumber.trim(),
+      formData.board || undefined,
+      formData.academicMedium || undefined,
+      formData.livingAddress.trim() || undefined,
+      formData.schoolName.trim() || undefined,
+      formData.schoolAddress.trim() || undefined,
+      formData.parent1Name.trim() || undefined,
+      formData.parent1Contact.trim() || undefined,
+      formData.parent2Name.trim() || undefined,
+      formData.parent2Contact.trim() || undefined,
+      formData.schoolTiming.trim() || undefined,
+      formData.dateOfBirth || undefined,
+      formData.gender || undefined,
+      formData.bloodGroup || undefined,
+    );
+    setIsRegistering(false);
+    if (res.success) {
+      setRegistered(true);
+      setFlow("success");
+    } else setFormError(res.error ?? "Registration failed. Please try again.");
+  };
+
+  const validateTeacherForm = () => {
+    const errs: Record<string, string> = {};
+    if (!teacherName.trim()) errs.name = "Full name is required";
+    if (!teacherPhone.trim()) errs.phone = "Phone number is required";
+    else if (!/^\d{10}$/.test(teacherPhone.trim()))
+      errs.phone = "Enter a valid 10-digit number";
+    if (selectedSubjects.length === 0)
+      errs.subjects = "Select at least one subject";
+    return errs;
+  };
+
+  const handleTeacherRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errs = validateTeacherForm();
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      return;
+    }
+    setFieldErrors({});
+    setIsRegistering(true);
+    setFormError("");
+    const res = await registerTeacher(
+      teacherName.trim(),
+      selectedSubjects,
+      teacherPhone.trim(),
+      teacherBio.trim(),
+    );
+    setIsRegistering(false);
+    if (res.success) {
+      setRegistered(true);
+      setFlow("success");
+    } else setFormError(res.error ?? "Registration failed. Please try again.");
+  };
+
+  const toggleSubject = (sub: string) => {
+    setSelectedSubjects((prev) =>
+      prev.includes(sub) ? prev.filter((s) => s !== sub) : [...prev, sub],
+    );
+    if (fieldErrors.subjects) setFieldErrors((e) => ({ ...e, subjects: "" }));
+  };
+
+  return (
+    <div className="min-h-screen relative flex items-center justify-center overflow-hidden py-8">
+      {/* Animated gradient background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(135deg, oklch(0.14 0.04 305) 0%, oklch(0.16 0.06 280) 40%, oklch(0.13 0.05 320) 100%)",
+          }}
+        />
+        <motion.div
+          className="absolute top-[-10%] left-[-10%] w-[70vw] h-[70vh] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, oklch(0.45 0.28 305 / 0.25), transparent 70%)",
+            filter: "blur(60px)",
+          }}
+          animate={{ scale: [1, 1.15, 1], opacity: [0.6, 1, 0.6] }}
+          transition={{
+            duration: 8,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-[-5%] right-[-5%] w-[60vw] h-[60vh] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, oklch(0.55 0.22 280 / 0.2), transparent 70%)",
+            filter: "blur(60px)",
+          }}
+          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
+          transition={{
+            duration: 10,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+            delay: 2,
+          }}
+        />
+      </div>
+
+      {/* Floating icons */}
+      {FLOATING_ELEMENTS.map(({ Icon, delay, x, y, size, color }, i) => (
+        <motion.div
+          key={`float-${x}-${y}`}
+          className={`absolute pointer-events-none ${color}`}
+          style={{ left: x, top: y }}
+          animate={{
+            y: [0, -20, 0],
+            rotate: [0, 6, -6, 0],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 4.5 + i * 0.4,
+            delay,
+            repeat: Number.POSITIVE_INFINITY,
+            ease: "easeInOut",
+          }}
+        >
+          <Icon size={size} />
+        </motion.div>
+      ))}
+
+      {/* Main card */}
+      <motion.div
+        initial={{ opacity: 0, y: 40, scale: 0.93 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 w-full max-w-md mx-4"
+      >
+        <div
+          className="relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            backdropFilter: "blur(24px)",
+            boxShadow:
+              "0 8px 48px rgba(124,58,237,0.3), 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)",
+          }}
+        >
+          <div
+            className="absolute inset-0 rounded-3xl pointer-events-none"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(167,139,250,0.1) 0%, transparent 50%, rgba(139,92,246,0.08) 100%)",
+            }}
+          />
+
+          <div className="relative p-7">
+            {/* Logo */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="flex flex-col items-center mb-6"
+            >
+              <Logo size="lg" showTagline variant="white" />
+            </motion.div>
+
+            <AnimatePresence mode="wait">
+              {/* ── Loading (II popup open or initializing) ── */}
+              {showConnecting && (
+                <motion.div
+                  key="connecting"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col items-center gap-4 py-8"
+                >
+                  <Loader2 size={32} className="animate-spin text-purple-400" />
+                  <p className="text-white/60 font-body text-sm">
+                    {isInitializing
+                      ? "Checking your session…"
+                      : "Opening Internet Identity…"}
+                  </p>
+                </motion.div>
+              )}
+
+              {/* ── Fetching role after II success ── */}
+              {showFetchingRole && !showConnecting && (
+                <motion.div
+                  key="fetching-role"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex flex-col items-center gap-4 py-10"
+                >
+                  <div className="relative">
+                    <motion.div
+                      className="w-16 h-16 rounded-full border-2 border-purple-500/20"
+                      style={{ borderTopColor: "oklch(0.72 0.22 305)" }}
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Number.POSITIVE_INFINITY,
+                        ease: "linear",
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <GraduationCap size={22} className="text-purple-400" />
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-white/80 font-display font-semibold text-sm">
+                      Setting up your account…
+                    </p>
+                    <p className="text-white/40 font-body text-xs mt-1">
+                      This only takes a moment
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── Landing — Connect button ── */}
+              {showLanding && (
+                <motion.div
+                  key="landing"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.35 }}
+                >
+                  {/* CRITICAL: Button is NEVER disabled — always clickable */}
+                  <motion.button
+                    type="button"
+                    onClick={handleLogin}
+                    whileHover={{
+                      scale: 1.02,
+                      boxShadow: "0 0 30px rgba(139,92,246,0.6)",
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    data-ocid="btn-login-ii"
+                    className="w-full relative overflow-hidden flex items-center justify-center gap-3 px-6 py-4 rounded-2xl text-white font-display font-bold text-base cursor-pointer transition-all duration-200"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #7c3aed 0%, #6d28d9 40%, #a21caf 100%)",
+                      boxShadow:
+                        "0 4px 20px rgba(124,58,237,0.5), 0 1px 0 rgba(255,255,255,0.15) inset",
+                    }}
+                  >
+                    <motion.span
+                      className="absolute inset-0"
+                      style={{
+                        background:
+                          "linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%)",
+                      }}
+                      animate={{ x: ["-100%", "200%"] }}
+                      transition={{
+                        duration: 2.5,
+                        repeat: Number.POSITIVE_INFINITY,
+                        ease: "easeInOut",
+                        repeatDelay: 1.5,
+                      }}
+                    />
+                    {isConnecting ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>
+                          {isInitializing ? "Preparing…" : "Connecting…"}
+                        </span>
+                      </>
+                    ) : isInitializing ? (
+                      <>
+                        <Loader2
+                          size={18}
+                          className="animate-spin opacity-70"
+                        />
+                        <span>Connect with Internet Identity</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock size={18} />
+                        <span>Connect with Internet Identity</span>
+                      </>
+                    )}
+                  </motion.button>
+
+                  {loginError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-3 flex items-center gap-2 rounded-xl px-4 py-2.5"
+                      style={{
+                        background: "rgba(239,68,68,0.15)",
+                        border: "1px solid rgba(239,68,68,0.3)",
+                      }}
+                    >
+                      <AlertCircle
+                        size={14}
+                        className="text-red-400 flex-shrink-0"
+                      />
+                      <p className="text-red-300 text-xs font-body">
+                        {loginError}
+                      </p>
+                    </motion.div>
+                  )}
+
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    {[
+                      {
+                        icon: "🎓",
+                        label: "For Students",
+                        desc: "Classes 1–10, track progress & tasks",
+                      },
+                      {
+                        icon: "👩‍🏫",
+                        label: "For Teachers",
+                        desc: "Manage homework & timetables",
+                      },
+                    ].map(({ icon, label, desc }) => (
+                      <motion.div
+                        key={label}
+                        whileHover={{ y: -2, scale: 1.02 }}
+                        className="rounded-2xl p-3.5 text-center border border-white/10 cursor-default"
+                        style={{ background: "rgba(255,255,255,0.04)" }}
+                      >
+                        <div className="text-2xl mb-1.5">{icon}</div>
+                        <div className="text-xs font-display font-semibold text-white/80">
+                          {label}
+                        </div>
+                        <div className="text-xs text-white/45 font-body mt-0.5">
+                          {desc}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  <p className="mt-4 text-center text-xs text-white/30 font-body">
+                    No passwords needed · Tap the button above to sign in
+                  </p>
+                </motion.div>
+              )}
+
+              {/* ── Role Selection ── */}
+              {needsRoleSelect && (
+                <motion.div
+                  key="role-select"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <div className="text-center mb-6">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 20,
+                        delay: 0.1,
+                      }}
+                      className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
+                      style={{ background: "rgba(139,92,246,0.2)" }}
+                    >
+                      <Sparkles size={26} className="text-purple-300" />
+                    </motion.div>
+                    <h2 className="text-white/90 font-display font-bold text-lg">
+                      Welcome! 🎉
+                    </h2>
+                    <p className="text-white/50 font-body text-sm mt-1">
+                      Connected! Choose your role to complete setup.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      {
+                        role: "student" as const,
+                        icon: "🎓",
+                        label: "I'm a Student",
+                        desc: "Track attendance, progress & homework",
+                        color: "rgba(139,92,246,0.15)",
+                        border: "rgba(139,92,246,0.4)",
+                      },
+                      {
+                        role: "teacher" as const,
+                        icon: "👩‍🏫",
+                        label: "I'm a Teacher",
+                        desc: "Manage class, homework & timetable",
+                        color: "rgba(99,102,241,0.15)",
+                        border: "rgba(99,102,241,0.4)",
+                      },
+                    ].map(({ role, icon, label, desc, color, border }) => (
+                      <motion.button
+                        key={role}
+                        type="button"
+                        onClick={() => handleRoleSelect(role)}
+                        whileHover={{ scale: 1.04, y: -4 }}
+                        whileTap={{ scale: 0.97 }}
+                        data-ocid={`btn-role-${role}`}
+                        className="flex flex-col items-center gap-2.5 p-5 rounded-2xl transition-all duration-200 cursor-pointer text-center group"
+                        style={{
+                          background: color,
+                          border: `1.5px solid ${border}`,
+                          boxShadow: `0 4px 20px ${color}`,
+                        }}
+                      >
+                        <span className="text-4xl group-hover:scale-110 transition-transform duration-200">
+                          {icon}
+                        </span>
+                        <span className="font-display font-bold text-sm text-white/90">
+                          {label}
+                        </span>
+                        <span className="text-xs text-white/50 font-body leading-relaxed">
+                          {desc}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── Student Multi-Step Registration ── */}
+              {flow === "register-student" && (
+                <motion.div
+                  key="register-student"
+                  initial={{ opacity: 0, x: 40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -40 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <button
+                      type="button"
+                      onClick={handleStudentBack}
+                      className="text-white/40 hover:text-white/80 transition-colors duration-200 text-sm font-body cursor-pointer"
+                    >
+                      ← Back
+                    </button>
+                    <div>
+                      <h2 className="text-white/90 font-display font-bold text-base">
+                        Student Registration
+                      </h2>
+                      <p className="text-white/40 font-body text-xs">
+                        Step {studentStep + 1} of 4 — {STEP_LABELS[studentStep]}
+                      </p>
+                    </div>
+                  </div>
+
+                  <StepIndicator
+                    current={studentStep}
+                    total={4}
+                    labels={STEP_LABELS}
+                  />
+
+                  <AnimatePresence mode="wait" custom={slideDir}>
+                    <motion.div
+                      key={`student-step-${studentStep}`}
+                      custom={slideDir}
+                      variants={{
+                        enter: (dir: number) => ({ opacity: 0, x: dir * 40 }),
+                        center: { opacity: 1, x: 0 },
+                        exit: (dir: number) => ({ opacity: 0, x: dir * -40 }),
+                      }}
+                      initial="enter"
+                      animate="center"
+                      exit="exit"
+                      transition={{ duration: 0.28, ease: "easeOut" }}
+                      className="mt-4 flex flex-col gap-3.5"
+                    >
+                      {studentStep === 0 && (
+                        <Step1Personal
+                          data={formData}
+                          errors={fieldErrors}
+                          update={updateField}
+                        />
+                      )}
+                      {studentStep === 1 && (
+                        <Step2Academic
+                          data={formData}
+                          errors={fieldErrors}
+                          update={updateField}
+                        />
+                      )}
+                      {studentStep === 2 && (
+                        <Step3Address
+                          data={formData}
+                          errors={fieldErrors}
+                          update={updateField}
+                        />
+                      )}
+                      {studentStep === 3 && (
+                        <Step4Parents
+                          data={formData}
+                          errors={fieldErrors}
+                          update={updateField}
+                        />
+                      )}
+                    </motion.div>
+                  </AnimatePresence>
+
+                  {formError && <FormError message={formError} />}
+
+                  <div className="mt-5">
+                    {studentStep < 3 ? (
+                      <motion.button
+                        type="button"
+                        onClick={handleStudentNext}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        data-ocid="btn-student-next"
+                        className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-white font-display font-bold text-sm cursor-pointer transition-all duration-200"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #a21caf 100%)",
+                          boxShadow: "0 4px 16px rgba(124,58,237,0.4)",
+                        }}
+                      >
+                        Next: {STEP_LABELS[studentStep + 1]}{" "}
+                        <ChevronRight size={16} />
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        type="button"
+                        onClick={handleStudentSubmit}
+                        disabled={isRegistering}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        data-ocid="btn-register-student"
+                        className="w-full flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-white font-display font-bold text-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #a21caf 100%)",
+                          boxShadow: "0 4px 16px rgba(124,58,237,0.4)",
+                        }}
+                      >
+                        {isRegistering ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" />{" "}
+                            Creating Account…
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 size={16} /> Complete Registration
+                          </>
+                        )}
+                      </motion.button>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* ── Teacher Registration ── */}
+              {flow === "register-teacher" && (
+                <motion.div
+                  key="register-teacher"
+                  initial={{ opacity: 0, x: 40 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -40 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                >
+                  <div className="flex items-center gap-3 mb-5">
+                    <button
+                      type="button"
+                      onClick={() => setFlow("none")}
+                      className="text-white/40 hover:text-white/80 transition-colors duration-200 text-sm font-body cursor-pointer"
+                    >
+                      ← Back
+                    </button>
+                    <div>
+                      <h2 className="text-white/90 font-display font-bold text-base">
+                        Teacher Registration
+                      </h2>
+                      <p className="text-white/40 font-body text-xs">
+                        Enter your details to manage your class
+                      </p>
+                    </div>
+                  </div>
+
+                  <form
+                    onSubmit={handleTeacherRegister}
+                    className="flex flex-col gap-4"
+                    noValidate
+                  >
+                    <FormField label="Full Name *" error={fieldErrors.name}>
+                      <Input
+                        id="t-name"
+                        placeholder="e.g. Sangya Devi"
+                        value={teacherName}
+                        onChange={(e) => {
+                          setTeacherName(e.target.value);
+                          setFieldErrors((fe) => ({ ...fe, name: "" }));
+                        }}
+                        data-ocid="input-teacher-name"
+                        className="login-input"
+                      />
+                    </FormField>
+
+                    <FormField label="Phone Number *" error={fieldErrors.phone}>
+                      <Input
+                        id="t-phone"
+                        type="tel"
+                        placeholder="10-digit mobile number"
+                        value={teacherPhone}
+                        onChange={(e) => {
+                          setTeacherPhone(e.target.value);
+                          setFieldErrors((fe) => ({ ...fe, phone: "" }));
+                        }}
+                        data-ocid="input-teacher-phone"
+                        className="login-input"
+                      />
+                    </FormField>
+
+                    <FormField
+                      label="Subjects You Teach *"
+                      error={fieldErrors.subjects}
+                    >
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {ALL_SUBJECTS.map((sub) => (
+                          <motion.button
+                            key={sub}
+                            type="button"
+                            onClick={() => toggleSubject(sub)}
+                            whileTap={{ scale: 0.95 }}
+                            data-ocid={`toggle-subject-${sub.toLowerCase().replace(/ /g, "-")}`}
+                            className={`px-3 py-1.5 rounded-full text-xs font-body border transition-all duration-200 cursor-pointer ${selectedSubjects.includes(sub) ? "text-white border-purple-400/60" : "text-white/50 border-white/15 hover:border-white/30 hover:text-white/70"}`}
+                            style={
+                              selectedSubjects.includes(sub)
+                                ? { background: "rgba(139,92,246,0.35)" }
+                                : { background: "rgba(255,255,255,0.04)" }
+                            }
+                          >
+                            {sub}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </FormField>
+
+                    <FormField label="Short Bio (optional)" error="">
+                      <Input
+                        id="t-bio"
+                        placeholder="Years of experience, specialisation…"
+                        value={teacherBio}
+                        onChange={(e) => setTeacherBio(e.target.value)}
+                        data-ocid="input-teacher-bio"
+                        className="login-input"
+                      />
+                    </FormField>
+
+                    {formError && <FormError message={formError} />}
+
+                    <Button
+                      type="submit"
+                      disabled={isRegistering}
+                      data-ocid="btn-register-teacher"
+                      className="w-full font-display font-bold py-5 rounded-2xl text-white transition-all duration-200 mt-1"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #9333ea 100%)",
+                        boxShadow: "0 4px 16px rgba(99,102,241,0.4)",
+                      }}
+                    >
+                      {isRegistering ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin mr-2" />{" "}
+                          Creating Account…
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 size={16} className="mr-2" /> Create
+                          Teacher Account
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </motion.div>
+              )}
+
+              {/* ── Success ── */}
+              {flow === "success" && (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex flex-col items-center gap-4 py-8 text-center"
+                >
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 18,
+                      delay: 0.15,
+                    }}
+                    className="w-20 h-20 rounded-full flex items-center justify-center"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(139,92,246,0.3), rgba(99,102,241,0.3))",
+                      boxShadow: "0 0 32px rgba(139,92,246,0.4)",
+                    }}
+                  >
+                    <CheckCircle2 size={40} className="text-purple-300" />
+                  </motion.div>
+                  <div>
+                    <h2 className="text-white/90 font-display font-bold text-xl">
+                      You're all set! 🎉
+                    </h2>
+                    {displayName && (
+                      <p className="text-purple-300 font-display font-semibold text-base mt-1">
+                        Welcome, {displayName}!
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-white/50 font-body text-sm">
+                    Your account is ready. Taking you to your dashboard…
+                  </p>
+                  <Loader2
+                    size={20}
+                    className="animate-spin text-purple-400 mt-2"
+                  />
+                </motion.div>
+              )}
+
+              {/* ── Welcome Back ── */}
+              {isWelcomeBack && (
+                <motion.div
+                  key="welcome-back"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                  className="flex flex-col items-center gap-4 py-8 text-center"
+                >
+                  <motion.div
+                    animate={{ scale: [1, 1.12, 1] }}
+                    transition={{ duration: 0.7, ease: "easeInOut" }}
+                    className="w-20 h-20 rounded-full flex items-center justify-center"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(139,92,246,0.3), rgba(167,139,250,0.2))",
+                      boxShadow: "0 0 32px rgba(139,92,246,0.4)",
+                    }}
+                  >
+                    <span className="text-4xl">👋</span>
+                  </motion.div>
+                  <div>
+                    <h2 className="text-white/90 font-display font-bold text-xl">
+                      Welcome back!
+                    </h2>
+                    {displayName && (
+                      <p className="text-purple-300 font-display font-semibold text-base mt-1">
+                        {displayName} ✨
+                      </p>
+                    )}
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="border-purple-400/40 text-purple-300 font-body"
+                    style={{ background: "rgba(139,92,246,0.15)" }}
+                  >
+                    {userRole === UserRole.teacher
+                      ? "👩‍🏫 Teacher"
+                      : "🎓 Student"}{" "}
+                    Account
+                  </Badge>
+                  <p className="text-white/40 font-body text-sm">
+                    Redirecting to your dashboard…
+                  </p>
+                  <Loader2 size={20} className="animate-spin text-purple-400" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="flex items-center justify-center gap-2 mt-5"
+        >
+          <Shield size={12} className="text-white/25" />
+          <p className="text-center text-xs text-white/30 font-body">
+            Secured by Internet Identity · No passwords needed · Privacy first
+          </p>
+        </motion.div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ── Step Progress Indicator ────────────────────────────
+function StepIndicator({
+  current,
+  total,
+}: { current: number; total: number; labels: string[] }) {
+  return (
+    <div className="flex items-center gap-1.5 mb-1">
+      {[0, 1, 2, 3].slice(0, total).map((i) => (
+        <div key={`seg-${i}`} className="flex items-center gap-1.5 flex-1">
+          <div
+            className="flex-1 h-1 rounded-full transition-all duration-500"
+            style={{
+              background:
+                i <= current
+                  ? "linear-gradient(90deg, #7c3aed, #a855f7)"
+                  : "rgba(255,255,255,0.1)",
+              opacity: i === current ? 1 : i < current ? 0.8 : 0.3,
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Shared form components ─────────────────────────────
+function FormField({
+  label,
+  error,
+  children,
+}: { label: string; error: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <Label className="text-white/60 font-body text-xs font-medium">
+        {label}
+      </Label>
+      {children}
+      {error && (
+        <motion.p
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-red-400 text-xs font-body"
+        >
+          {error}
+        </motion.p>
+      )}
+    </div>
+  );
+}
+
+function FormError({ message }: { message: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex items-center gap-2 rounded-xl px-4 py-2.5 mt-2"
+      style={{
+        background: "rgba(239,68,68,0.15)",
+        border: "1px solid rgba(239,68,68,0.3)",
+      }}
+    >
+      <AlertCircle size={14} className="text-red-400 flex-shrink-0" />
+      <p className="text-red-300 text-xs font-body">{message}</p>
+    </motion.div>
+  );
+}
+
+function GlassSelect({
+  value,
+  onChange,
+  options,
+  rawOptions,
+  placeholder,
+  error,
+  dataOcid,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  rawOptions?: string[];
+  placeholder: string;
+  error: boolean;
+  dataOcid: string;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      data-ocid={dataOcid}
+      className="w-full rounded-xl px-3 py-2.5 text-sm font-body focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200"
+      style={{
+        background: "rgba(255,255,255,0.06)",
+        border: error
+          ? "1.5px solid rgba(239,68,68,0.6)"
+          : "1px solid rgba(255,255,255,0.12)",
+        color: value ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.35)",
+        colorScheme: "dark",
+      }}
+    >
+      <option value="" disabled style={{ background: "#1e1b4b" }}>
+        {placeholder}
+      </option>
+      {options.map((opt, i) => (
+        <option
+          key={opt}
+          value={rawOptions ? rawOptions[i] : opt}
+          style={{ background: "#1e1b4b" }}
+        >
+          {opt}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function GlassTextarea({
+  value,
+  onChange,
+  placeholder,
+  rows,
+  dataOcid,
+  error,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  rows: number;
+  dataOcid: string;
+  error: boolean;
+}) {
+  return (
+    <textarea
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      rows={rows}
+      data-ocid={dataOcid}
+      className="w-full rounded-xl px-3 py-2.5 text-sm font-body focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200 resize-none"
+      style={{
+        background: "rgba(255,255,255,0.06)",
+        border: error
+          ? "1.5px solid rgba(239,68,68,0.6)"
+          : "1px solid rgba(255,255,255,0.12)",
+        color: "rgba(255,255,255,0.85)",
+        colorScheme: "dark",
+      }}
+    />
+  );
+}
+
+// ── Step 1: Personal Info ──────────────────────────────
+function Step1Personal({
+  data,
+  errors,
+  update,
+}: {
+  data: StudentFormData;
+  errors: Record<string, string>;
+  update: (field: keyof StudentFormData, value: string) => void;
+}) {
+  return (
+    <>
+      <FormField label="Full Name *" error={errors.name}>
+        <Input
+          id="s-name"
+          placeholder="e.g. Your full name"
+          value={data.name}
+          onChange={(e) => update("name", e.target.value)}
+          data-ocid="input-student-name"
+          className="login-input"
+        />
+      </FormField>
+
+      <FormField label="Date of Birth" error={errors.dateOfBirth}>
+        <input
+          type="date"
+          value={data.dateOfBirth}
+          onChange={(e) => update("dateOfBirth", e.target.value)}
+          data-ocid="input-student-dob"
+          max={new Date().toISOString().split("T")[0]}
+          className="w-full rounded-xl px-3 py-2.5 text-sm font-body focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200"
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            border: errors.dateOfBirth
+              ? "1.5px solid rgba(239,68,68,0.6)"
+              : "1px solid rgba(255,255,255,0.12)",
+            color: data.dateOfBirth
+              ? "rgba(255,255,255,0.85)"
+              : "rgba(255,255,255,0.35)",
+            colorScheme: "dark",
+          }}
+        />
+      </FormField>
+
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Gender *" error={errors.gender}>
+          <GlassSelect
+            value={data.gender}
+            onChange={(v) => update("gender", v)}
+            options={GENDERS}
+            placeholder="Select gender"
+            error={!!errors.gender}
+            dataOcid="select-student-gender"
+          />
+        </FormField>
+        <FormField label="Blood Group" error={errors.bloodGroup}>
+          <GlassSelect
+            value={data.bloodGroup}
+            onChange={(v) => update("bloodGroup", v)}
+            options={BLOOD_GROUPS}
+            placeholder="Select"
+            error={!!errors.bloodGroup}
+            dataOcid="select-student-blood"
+          />
+        </FormField>
+      </div>
+    </>
+  );
+}
+
+// ── Step 2: Academic Info ──────────────────────────────
+function Step2Academic({
+  data,
+  errors,
+  update,
+}: {
+  data: StudentFormData;
+  errors: Record<string, string>;
+  update: (field: keyof StudentFormData, value: string) => void;
+}) {
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Class *" error={errors.className}>
+          <GlassSelect
+            value={data.className}
+            onChange={(v) => update("className", v)}
+            options={CLASSES.map((c) => `${c} Grade`)}
+            rawOptions={CLASSES}
+            placeholder="Select class"
+            error={!!errors.className}
+            dataOcid="select-student-class"
+          />
+        </FormField>
+        <FormField label="Board *" error={errors.board}>
+          <GlassSelect
+            value={data.board}
+            onChange={(v) => update("board", v)}
+            options={BOARDS}
+            placeholder="Select board"
+            error={!!errors.board}
+            dataOcid="select-student-board"
+          />
+        </FormField>
+      </div>
+
+      <FormField label="Academic Medium *" error={errors.academicMedium}>
+        <GlassSelect
+          value={data.academicMedium}
+          onChange={(v) => update("academicMedium", v)}
+          options={MEDIUMS}
+          placeholder="Select medium"
+          error={!!errors.academicMedium}
+          dataOcid="select-student-medium"
+        />
+      </FormField>
+
+      <FormField label="Roll Number *" error={errors.rollNumber}>
+        <Input
+          id="s-roll"
+          placeholder="e.g. STU-2024-042"
+          value={data.rollNumber}
+          onChange={(e) => update("rollNumber", e.target.value)}
+          data-ocid="input-student-roll"
+          className="login-input"
+        />
+      </FormField>
+
+      <FormField label="Email Address *" error={errors.email}>
+        <Input
+          id="s-email"
+          type="email"
+          placeholder="student@email.com"
+          value={data.email}
+          onChange={(e) => update("email", e.target.value)}
+          data-ocid="input-student-email"
+          className="login-input"
+        />
+      </FormField>
+    </>
+  );
+}
+
+// ── Step 3: Address Info ───────────────────────────────
+function Step3Address({
+  data,
+  errors,
+  update,
+}: {
+  data: StudentFormData;
+  errors: Record<string, string>;
+  update: (field: keyof StudentFormData, value: string) => void;
+}) {
+  return (
+    <>
+      <FormField label="Living Address *" error={errors.livingAddress}>
+        <GlassTextarea
+          value={data.livingAddress}
+          onChange={(v) => update("livingAddress", v)}
+          placeholder="House no., Street, City, State, PIN"
+          rows={3}
+          dataOcid="input-student-living-addr"
+          error={!!errors.livingAddress}
+        />
+      </FormField>
+
+      <FormField label="School Name *" error={errors.schoolName}>
+        <Input
+          id="s-school-name"
+          placeholder="e.g. Delhi Public School"
+          value={data.schoolName}
+          onChange={(e) => update("schoolName", e.target.value)}
+          data-ocid="input-student-school-name"
+          className="login-input"
+        />
+      </FormField>
+
+      <FormField label="School Address" error={errors.schoolAddress}>
+        <GlassTextarea
+          value={data.schoolAddress}
+          onChange={(v) => update("schoolAddress", v)}
+          placeholder="School full address"
+          rows={2}
+          dataOcid="input-student-school-addr"
+          error={!!errors.schoolAddress}
+        />
+      </FormField>
+
+      <FormField label="School Timing" error={errors.schoolTiming}>
+        <Input
+          id="s-timing"
+          placeholder="e.g. 8:00 AM – 2:00 PM"
+          value={data.schoolTiming}
+          onChange={(e) => update("schoolTiming", e.target.value)}
+          data-ocid="input-student-timing"
+          className="login-input"
+        />
+      </FormField>
+    </>
+  );
+}
+
+// ── Step 4: Parent Info ────────────────────────────────
+function Step4Parents({
+  data,
+  errors,
+  update,
+}: {
+  data: StudentFormData;
+  errors: Record<string, string>;
+  update: (field: keyof StudentFormData, value: string) => void;
+}) {
+  return (
+    <>
+      <div
+        className="rounded-xl p-3 border border-purple-500/20 mb-1"
+        style={{ background: "rgba(139,92,246,0.07)" }}
+      >
+        <p className="text-white/50 font-body text-xs">
+          Parent 1 is required. Parent 2 is optional.
+        </p>
+      </div>
+
+      <FormField label="Parent 1 Name *" error={errors.parent1Name}>
+        <Input
+          id="p1-name"
+          placeholder="e.g. Parent/Guardian name"
+          value={data.parent1Name}
+          onChange={(e) => update("parent1Name", e.target.value)}
+          data-ocid="input-parent1-name"
+          className="login-input"
+        />
+      </FormField>
+
+      <FormField label="Parent 1 Contact *" error={errors.parent1Contact}>
+        <Input
+          id="p1-phone"
+          type="tel"
+          placeholder="10-digit mobile number"
+          value={data.parent1Contact}
+          onChange={(e) => update("parent1Contact", e.target.value)}
+          data-ocid="input-parent1-contact"
+          className="login-input"
+        />
+      </FormField>
+
+      <FormField label="Parent 2 Name" error="">
+        <Input
+          id="p2-name"
+          placeholder="Optional"
+          value={data.parent2Name}
+          onChange={(e) => update("parent2Name", e.target.value)}
+          data-ocid="input-parent2-name"
+          className="login-input"
+        />
+      </FormField>
+
+      <FormField label="Parent 2 Contact" error={errors.parent2Contact}>
+        <Input
+          id="p2-phone"
+          type="tel"
+          placeholder="Optional — 10-digit number"
+          value={data.parent2Contact}
+          onChange={(e) => update("parent2Contact", e.target.value)}
+          data-ocid="input-parent2-contact"
+          className="login-input"
+        />
+      </FormField>
+    </>
+  );
+}

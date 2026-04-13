@@ -1,0 +1,26 @@
+{
+  "overview": "Shristi Tutorials is a premium EdTech platform for students and teachers with Internet Identity login, role-based dashboards, interactive forms for homework/attendance/planner, and a teacher dashboard for managing assignments and timetables — all in a stunning purple glassmorphism UI with Framer Motion animations.",
+  "features": [
+    "Internet Identity login with Student/Teacher role selection",
+    "Protected routes and persistent sessions",
+    "Student homework submission and attendance forms",
+    "Study task inline editor with confetti celebrations",
+    "Teacher dashboard with homework creation and timetable management",
+    "Student list with profile and submission views",
+    "Announcement broadcast form",
+    "Purple glassmorphism + Framer Motion animated UI throughout",
+    "9-subject curriculum tracking with Recharts visualizations"
+  ],
+  "category": "education",
+  "tags": [
+    "edtech",
+    "education",
+    "students",
+    "teachers",
+    "dashboard",
+    "glassmorphism",
+    "internet-identity",
+    "framer-motion"
+  ],
+  "last_updated": "2026-04-12T12:00:35.862Z"
+}

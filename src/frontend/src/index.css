@@ -1,0 +1,274 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-display: "Space Grotesk";
+    --font-body: "DM Sans";
+    --font-mono: "Geist Mono";
+    --radius: 0.75rem;
+
+    --background: 0.97 0.012 270;
+    --foreground: 0.18 0.015 270;
+    --card: 0.985 0.008 270;
+    --card-foreground: 0.18 0.015 270;
+    --popover: 0.99 0.006 270;
+    --popover-foreground: 0.18 0.015 270;
+
+    --primary: 0.52 0.24 305;
+    --primary-foreground: 0.98 0.005 305;
+
+    --secondary: 0.94 0.01 270;
+    --secondary-foreground: 0.28 0.015 270;
+    --muted: 0.92 0.01 270;
+    --muted-foreground: 0.48 0.012 270;
+
+    --accent: 0.7 0.16 280;
+    --accent-foreground: 0.18 0.015 280;
+
+    --destructive: 0.55 0.22 25;
+    --destructive-foreground: 0.98 0 0;
+
+    --border: 0.88 0.012 270;
+    --input: 0.88 0.012 270;
+    --ring: 0.52 0.24 305;
+
+    --chart-1: 0.52 0.24 305;
+    --chart-2: 0.7 0.16 280;
+    --chart-3: 0.65 0.18 150;
+    --chart-4: 0.72 0.15 85;
+    --chart-5: 0.6 0.16 350;
+
+    --sidebar: 0.985 0.008 270;
+    --sidebar-foreground: 0.18 0.015 270;
+    --sidebar-primary: 0.52 0.24 305;
+    --sidebar-primary-foreground: 0.98 0.005 305;
+    --sidebar-accent: 0.94 0.01 270;
+    --sidebar-accent-foreground: 0.28 0.015 270;
+    --sidebar-border: 0.88 0.012 270;
+    --sidebar-ring: 0.52 0.24 305;
+
+    /* Glassmorphism & neumorphism tokens */
+    --glass-blur: blur(10px);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --shadow-glass: 0 8px 32px 0 rgba(124, 58, 237, 0.1);
+    --shadow-neumorphic: 0 2px 8px rgba(124, 58, 237, 0.05), inset 0 1px 2px
+      rgba(255, 255, 255, 0.8);
+    --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    --gradient-accent: linear-gradient(135deg, #c4b5fd 0%, #e9d5ff 100%);
+  }
+
+  .dark {
+    --background: 0.14 0.018 305;
+    --foreground: 0.92 0.01 305;
+    --card: 0.18 0.022 305;
+    --card-foreground: 0.92 0.01 305;
+    --popover: 0.22 0.025 305;
+    --popover-foreground: 0.92 0.01 305;
+
+    --primary: 0.72 0.22 305;
+    --primary-foreground: 0.14 0.018 305;
+
+    --secondary: 0.22 0.02 305;
+    --secondary-foreground: 0.85 0.01 305;
+    --muted: 0.22 0.02 305;
+    --muted-foreground: 0.55 0.015 305;
+
+    --accent: 0.75 0.18 280;
+    --accent-foreground: 0.14 0.018 280;
+
+    --destructive: 0.65 0.19 22;
+    --destructive-foreground: 0.92 0.01 22;
+
+    --border: 0.3 0.022 305;
+    --input: 0.3 0.022 305;
+    --ring: 0.72 0.22 305;
+
+    --chart-1: 0.72 0.22 305;
+    --chart-2: 0.75 0.18 280;
+    --chart-3: 0.65 0.18 150;
+    --chart-4: 0.7 0.15 85;
+    --chart-5: 0.68 0.16 350;
+
+    --sidebar: 0.18 0.022 305;
+    --sidebar-foreground: 0.92 0.01 305;
+    --sidebar-primary: 0.72 0.22 305;
+    --sidebar-primary-foreground: 0.14 0.018 305;
+    --sidebar-accent: 0.22 0.02 305;
+    --sidebar-accent-foreground: 0.85 0.01 305;
+    --sidebar-border: 0.3 0.022 305;
+    --sidebar-ring: 0.72 0.22 305;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+}
+
+@layer utilities {
+  .transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ---- Glassmorphism ---- */
+  .glass {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(124, 58, 237, 0.12);
+    box-shadow: 0 8px 32px 0 rgba(124, 58, 237, 0.08);
+  }
+
+  .glass-purple {
+    background: rgba(124, 58, 237, 0.08);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(124, 58, 237, 0.12);
+  }
+
+  .glass-dark {
+    background: rgba(20, 10, 40, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(124, 58, 237, 0.18);
+  }
+
+  /* ---- Neumorphic ---- */
+  .shadow-neumorphic {
+    box-shadow: 4px 4px 10px rgba(124, 58, 237, 0.08), -2px -2px 8px
+      rgba(255, 255, 255, 0.85), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  }
+
+  .shadow-neumorphic-inset {
+    box-shadow: inset 4px 4px 8px rgba(124, 58, 237, 0.1), inset -2px -2px 6px
+      rgba(255, 255, 255, 0.7);
+  }
+
+  /* ---- Glow effects ---- */
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.35), 0 0 40px
+      rgba(124, 58, 237, 0.15);
+  }
+
+  .glow-purple-sm {
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.25);
+  }
+
+  .shadow-glass {
+    box-shadow: 0 8px 32px 0 rgba(124, 58, 237, 0.1);
+  }
+
+  /* ---- Gradients ---- */
+  .grad-purple {
+    background: linear-gradient(135deg, #7c3aed 0%, #c4b5fd 100%);
+  }
+
+  .grad-purple-deep {
+    background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 50%, #a855f7 100%);
+  }
+
+  .grad-lavender {
+    background: linear-gradient(135deg, #c4b5fd 0%, #e9d5ff 100%);
+  }
+
+  .gradient-primary {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+  }
+
+  .gradient-accent {
+    background: linear-gradient(135deg, #c4b5fd 0%, #e9d5ff 100%);
+  }
+
+  /* ---- Hover / Card interactions ---- */
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-hover:hover {
+    transform: translateY(-4px) perspective(800px) rotateX(1.5deg);
+    box-shadow: 0 16px 48px rgba(124, 58, 237, 0.18);
+  }
+
+  .hover-glow {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 12px 40px rgba(124, 58, 237, 0.22);
+  }
+
+  /* ---- Micro-interaction utilities ---- */
+  .bounce-gentle {
+    animation: bounce-gentle 0.6s ease-in-out;
+  }
+
+  .tilt-hover {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .tilt-hover:hover {
+    transform: perspective(1000px) rotateX(2deg) rotateY(2deg);
+  }
+
+  .pulse-soft {
+    animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  /* ---- Animation helpers ---- */
+  .animate-fade-in {
+    animation: fade-in 0.6s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  .animate-float {
+    animation: float 4s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s infinite;
+    background-size: 200% 100%;
+  }
+
+  /* ---- Typography ---- */
+  .font-display {
+    font-family: var(--font-display), sans-serif;
+  }
+
+  /* ---- Scrollbar ---- */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 5px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(124, 58, 237, 0.25);
+    border-radius: 4px;
+  }
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("/assets/fonts/SpaceGrotesk.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("/assets/fonts/DMSans.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src: url("/assets/fonts/GeistMono.woff2") format("woff2");
+  font-display: swap;
+}

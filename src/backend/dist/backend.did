@@ -1,0 +1,216 @@
+type UserRole = 
+ variant {
+   student;
+   teacher;
+   unregistered;
+ };
+type TimetableEntry = 
+ record {
+   className: text;
+   dayOfWeek: text;
+   endTime: text;
+   id: nat;
+   startTime: text;
+   subject: text;
+   teacherPrincipal: principal;
+ };
+type Timestamp = int;
+type TeacherProfile = 
+ record {
+   bio: text;
+   contactPhone: text;
+   name: text;
+   "principal": principal;
+   subjects: vec text;
+ };
+type SubmissionStatus = 
+ variant {
+   graded;
+   pending;
+   submitted;
+ };
+type SubjectProgress = 
+ record {
+   currentPercentage: nat;
+   studentId: StudentId;
+   subject: text;
+   weeklyScores: vec nat;
+ };
+type StudyTask = 
+ record {
+   completed: bool;
+   dueDate: DateText;
+   id: text;
+   priority: text;
+   studentId: StudentId;
+   subject: text;
+   title: text;
+ };
+type StudyStreak = 
+ record {
+   currentStreak: nat;
+   lastStudyDate: DateText;
+   longestStreak: nat;
+   studentId: StudentId;
+ };
+type StudentProfile = 
+ record {
+   academicMedium: opt text;
+   bloodGroup: opt text;
+   board: opt text;
+   className: text;
+   dateOfBirth: opt text;
+   email: text;
+   gender: opt text;
+   livingAddress: opt text;
+   name: text;
+   parent1Contact: opt text;
+   parent1Name: opt text;
+   parent2Contact: opt text;
+   parent2Name: opt text;
+   "principal": principal;
+   rollNumber: text;
+   schoolAddress: opt text;
+   schoolName: opt text;
+   schoolTiming: opt text;
+ };
+type StudentId = text;
+type Student = 
+ record {
+   avatar: text;
+   className: text;
+   id: StudentId;
+   name: text;
+   streakCount: nat;
+   subjects: vec text;
+ };
+type HomeworkSubmission = 
+ record {
+   homeworkId: nat;
+   id: nat;
+   status: SubmissionStatus;
+   studentPrincipal: principal;
+   submittedAt: Timestamp;
+   submittedContent: text;
+ };
+type HomeworkAssignment = 
+ record {
+   assignedClasses: vec text;
+   createdAt: Timestamp;
+   description: text;
+   dueDate: text;
+   id: nat;
+   subject: text;
+   teacherPrincipal: principal;
+   title: text;
+ };
+type DateText = text;
+type ChatMessage = 
+ record {
+   content: text;
+   id: nat;
+   senderName: text;
+   senderPrincipal: principal;
+   sentAt: Timestamp;
+   subject: text;
+ };
+type AttendanceRecord = 
+ record {
+   date: DateText;
+   markedVia: text;
+   present: bool;
+   studentId: StudentId;
+ };
+type ApiResult_8 = 
+ variant {
+   err: text;
+   ok: vec StudentProfile;
+ };
+type ApiResult_7 = 
+ variant {
+   err: text;
+   ok: vec HomeworkSubmission;
+ };
+type ApiResult_6 = 
+ variant {
+   err: text;
+   ok: Announcement;
+ };
+type ApiResult_5 = 
+ variant {
+   err: text;
+   ok: HomeworkAssignment;
+ };
+type ApiResult_4 = 
+ variant {
+   err: text;
+   ok: ChatMessage;
+ };
+type ApiResult_3 = 
+ variant {
+   err: text;
+   ok: StudentProfile;
+ };
+type ApiResult_2 = 
+ variant {
+   err: text;
+   ok: TeacherProfile;
+ };
+type ApiResult_1 = 
+ variant {
+   err: text;
+   ok: HomeworkSubmission;
+ };
+type ApiResult = 
+ variant {
+   err: text;
+   ok: TimetableEntry;
+ };
+type Announcement = 
+ record {
+   body: text;
+   id: nat;
+   publishedAt: Timestamp;
+   targetClasses: vec text;
+   teacherPrincipal: principal;
+   title: text;
+ };
+service : {
+  completeTask: (taskId: text) -> (bool);
+  getAnnouncements: (className: text) -> (vec Announcement) query;
+  getAttendance: (studentId: text) -> (vec AttendanceRecord) query;
+  getHomeworkByClass: (className: text) -> (vec HomeworkAssignment) query;
+  getMessages: (subject: text) -> (vec ChatMessage) query;
+  getMyProfile: () ->
+   (opt variant {
+          student: StudentProfile;
+          teacher: TeacherProfile;
+        }) query;
+  getMyRole: () -> (UserRole) query;
+  getStreak: (studentId: text) -> (opt StudyStreak) query;
+  getStudentList: () -> (ApiResult_8) query;
+  getStudentProfile: (studentId: text) -> (opt Student) query;
+  getStudyTasks: (studentId: text) -> (vec StudyTask) query;
+  getSubjectProgress: (studentId: text) -> (vec SubjectProgress) query;
+  getSubmissions: (homeworkId: nat) -> (ApiResult_7) query;
+  getTimetable: (className: text) -> (vec TimetableEntry) query;
+  listAllTeachers: () -> (vec TeacherProfile) query;
+  markAttendance: (studentId: text, date: text, via: text) -> (bool);
+  postAnnouncement: (title: text, body: text, targetClasses: vec text) ->
+   (ApiResult_6);
+  postHomework: (subject: text, title: text, description: text, dueDate:
+   text, assignedClasses: vec text) -> (ApiResult_5);
+  postMessage: (content: text, subject: text) -> (ApiResult_4);
+  registerStudent: (name: text, className: text, email: text, rollNumber:
+   text, board: opt text, academicMedium: opt text, livingAddress: opt text,
+   schoolName: opt text, schoolAddress: opt text, parent1Name: opt text,
+   parent1Contact: opt text, parent2Name: opt text, parent2Contact: opt text,
+   schoolTiming: opt text, dateOfBirth: opt text, gender: opt text,
+   bloodGroup: opt text) -> (ApiResult_3);
+  registerTeacher: (name: text, subjects: vec text, contactPhone: text, bio:
+   text) -> (ApiResult_2);
+  seedDemoData: () -> ();
+  seedTeachers: () -> ();
+  submitHomework: (homeworkId: nat, submittedContent: text) -> (ApiResult_1);
+  updateTimetable: (entry: TimetableEntry) -> (ApiResult);
+}
